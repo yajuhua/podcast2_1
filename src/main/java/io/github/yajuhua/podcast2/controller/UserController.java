@@ -585,7 +585,11 @@ public class UserController {
     @ApiOperation("是否有apiToken")
     @GetMapping("/hasApiToken")
     public Result<Boolean> hasApiToken(){
-     if (getApiToken().getCode() == 1 && !getApiToken().getData().equalsIgnoreCase("none") && !getApiToken().getData().isEmpty()){
+        String data = getApiToken().getData();
+        if (getApiToken().getCode() == 1
+             && data != null
+             && !data.equalsIgnoreCase("none")
+             && !data.isEmpty()){
            return Result.success(true);
        }else {
          return Result.success(false);
