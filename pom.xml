@@ -8,7 +8,7 @@
     <name>podcast2</name>
     <description>podcast2</description>
     <properties>
-        <podcast2Version>v2.5.0</podcast2Version>
+        <podcast2Version>v2.5.1</podcast2Version>
         <commit.id>none</commit.id>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
