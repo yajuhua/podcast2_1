@@ -87,8 +87,14 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
      */
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {
 
-        if (userMapper.list().get(0).getApiDoc() != null
-                && userMapper.list().get(0).getApiDoc()){
+        boolean openDoc = false;
+        try {
+            openDoc = userMapper.list().get(0).getApiDoc() != null
+                    && userMapper.list().get(0).getApiDoc();
+        } catch (Exception e) {
+            log.warn("用户信息未初始化: {}",e.getMessage());
+        }
+        if (openDoc){
             //开启api文档
             log.info("开启api文档...");
             registry.addResourceHandler("/doc.html").addResourceLocations("classpath:/META-INF/resources/");

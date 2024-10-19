@@ -27,7 +27,13 @@ public class TelegramBotInitializer {
 
     @PostConstruct
     public void registerBot() throws Exception {
-        BotInfo botInfo = userService.getBotInfo();
+        BotInfo botInfo = null;
+        try {
+            botInfo = userService.getBotInfo();
+        } catch (Exception e) {
+            log.warn("用户信息未初始化: {}",e.getMessage());
+            return;
+        }
         if (botInfo != null
                 && botInfo.getIsOpen() != null
                 && botInfo.getIsOpen()
