@@ -25,4 +25,4 @@ jobs:
           yt-dlp --version         
 
       - name: youtube
-        run: java -jar test/test-plugin-0.3-jar-with-dependencies.jar https://www.youtube.com/@laogao
+        run: java -jar test/test-plugin-0.3-jar-with-dependencies.jar https://www.youtube.com/@laogao/videos
