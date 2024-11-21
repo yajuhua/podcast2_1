@@ -126,11 +126,11 @@ public class UserController {
 
 
     /**
-     * 自定义附件域名
+     * 更新自定义附件域名
      * @param domain
      * @return
      */
-    @ApiOperation("自定义附件域名")
+    @ApiOperation("更新自定义附件域名")
     @PostMapping("/enclosureDomain")
     @Transactional
     public Result enclosureDomain(@RequestParam String domain){
@@ -139,6 +139,36 @@ public class UserController {
         }
         User user = new User();
         user.setHostname(domain);
+        userMapper.update(user);
+        return Result.success();
+    }
+
+    /**
+     * 获取自定义附件域名
+     * @return
+     */
+    @ApiOperation("获取自定义附件域名")
+    @GetMapping("/enclosureDomain")
+    @Transactional
+    public Result getEnclosureDomain(){
+        List<User> list = userMapper.list();
+        if (list.isEmpty()){
+            return Result.success();
+        }
+        String hostname = list.get(0).getHostname();
+        return Result.success(hostname);
+    }
+
+    /**
+     * 删除自定义附件域名
+     * @return
+     */
+    @ApiOperation("删除自定义附件域名")
+    @DeleteMapping("/enclosureDomain")
+    @Transactional
+    public Result delEnclosureDomain(){
+        User user = new User();
+        user.setHostname("none");//表示没有自定义域名
         userMapper.update(user);
         return Result.success();
     }

@@ -148,7 +148,7 @@
         <div v-show="activeMenu === 'historyLogs'">
           <title>历史日志页面</title>
           <div id="historyLogspage">
-            <el-card v-loading="">
+            <el-card>
               <div slot="header" class="clearfix">
                 <!-- 自定义日志时间范围 -->
                 <el-date-picker
@@ -232,25 +232,19 @@
         <div v-show="activeMenu === 'customDomainName'">
           <el-form :inline="true" class="demo-form-inline">
 
-            <el-form-item label="选择">
-              <el-select v-model="user.domain.select">
-                <el-option label="默认" value='0'></el-option>
-                <el-option label="修改" value='1'></el-option>
-              </el-select>
+            <el-form-item label="附件域名">
+              <el-input v-model="user.domain.value" placeholder="请输入附件域名"></el-input>
+              <el-tooltip class="item" effect="dark" content="如https://yajuhua.github.io:8088"
+                          placement="top-start">
+                <i class="el-icon-question"></i>
+              </el-tooltip>
             </el-form-item>
-
-            <div v-if="user.domain.select == '1'">
-              <el-form-item label="附件域名">
-                <el-input v-model="user.domain.value" placeholder="请输入"></el-input>
-                <el-tooltip class="item" effect="dark" content="如https://yajuhua.github.io:8088"
-                            placement="top-start">
-                  <i class="el-icon-question"></i>
-                </el-tooltip>
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="changeDomain()">修改</el-button>
-              </el-form-item>
-            </div>
+            <el-form-item>
+              <el-button type="primary" @click="changeDomain()">修改</el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="deleteDomain()">删除</el-button>
+            </el-form-item>
           </el-form>
         </div>
 
@@ -782,6 +776,7 @@
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script>
@@ -947,6 +942,8 @@ export default {
     this.getApiTokenInfo();
     //获取api文档状态
     this.getApiDocStatus();
+    //获取附件自定义域名
+    this.getEnclosureDomain();
   },
   methods: {
     toSubList() {
@@ -1285,11 +1282,12 @@ export default {
     //下载进度展示
     setupDownloadSocket() {
       let clientId = Math.random().toString(36).substr(2);
-      let wsProtocol = window.location.protocol.includes("https") ? "wss" : "ws";
-      let wsHost = window.location.hostname; // 使用前端主机名
-      let wsPort = window.location.port ? `:${window.location.port}` : ''; // 使用前端端口，如果有的话
+      // let wsProtocol = window.location.protocol.includes("https") ? "wss" : "ws";
+      // let wsHost = window.location.hostname; // 使用前端主机名
+      // let wsPort = window.location.port ? `:${window.location.port}` : ''; // 使用前端端口，如果有的话
       //let wsPort = '8080';
-      let wsUrl = `${wsProtocol}://${wsHost}${wsPort}/ws/download/${clientId}`;
+      //let wsUrl = `${wsProtocol}://${wsHost}${wsPort}/ws/download/${clientId}`;
+      let wsUrl = `/ws/download/${clientId}`;
 
       let websocket = null;
       //判断当前浏览器是否支持WebSocket
@@ -1338,10 +1336,11 @@ export default {
     //日志
     setupLogsSocket() {
       let clientId = Math.random().toString(36).substr(2);
-      let wsProtocol = window.location.protocol.includes("https") ? "wss" : "ws";
-      let wsHost = window.location.hostname; // 使用前端主机名
-      let wsPort = window.location.port ? `:${window.location.port}` : ''; // 使用前端端口，如果有的话
-      let wsUrl = `${wsProtocol}://${wsHost}${wsPort}/ws/logs/${clientId}`;
+      // let wsProtocol = window.location.protocol.includes("https") ? "wss" : "ws";
+      // let wsHost = window.location.hostname; // 使用前端主机名
+      // let wsPort = window.location.port ? `:${window.location.port}` : ''; // 使用前端端口，如果有的话
+      // let wsUrl = `${wsProtocol}://${wsHost}${wsPort}/ws/logs/${clientId}`;
+      let wsUrl = `/ws/logs/${clientId}`;
 
 
       let websocket = null;
@@ -1522,7 +1521,8 @@ export default {
           axios.post('/user/enclosureDomain?domain=' + domain)
               .then(res => {
                 if (res.data.code == '1') {
-                  this.$message.success('修改成功！')
+                  this.$message.success('修改成功！');
+                  this.getEnclosureDomain();
                 } else {
                   this.$message.error(res.data.msg)
                 }
@@ -1536,6 +1536,42 @@ export default {
 
 
     },
+
+    //删除自定义域名
+    deleteDomain(){
+      this.$confirm('此操作将删除附件自定义域名, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        axios.delete('/user/enclosureDomain')
+            .then(res => {
+              if (res.data.code == '1') {
+                this.$message.success('删除成功！');
+                this.getEnclosureDomain();
+              } else {
+                this.$message.error(res.data.msg)
+              }
+            }).catch(err => {
+          console.log(err)
+          this.$message.error('删除失败！')
+        })
+      }).catch(() => {
+        this.$message.info('已取消删除')
+      });
+    },
+
+    //获取附件自定义域名
+    getEnclosureDomain(){
+      axios.get('/user/enclosureDomain')
+          .then(res => {
+            this.user.domain.value = res.data.data;
+          }).catch(err => {
+        console.log(err)
+        this.$message.error('获取附件自定义域名失败！')
+      })
+    },
+
     //修改用户名和密码
     userAccountChange() {
       let username = this.user.account.username;

@@ -21,7 +21,13 @@
                 first_version = #{firstVersion},
             </if>
             <if test="hostname != null">
-                hostname = #{hostname},
+                hostname =
+                <choose>
+                    <!--如果值为'none',设置为Null -->
+                    <when test="hostname == 'none'">NULL</when>
+                    <!-- 否则正常使用参数值 -->
+                    <otherwise>#{hostname}</otherwise>
+                </choose>,
             </if>
             <if test="autoUpdatePlugin != null">
                 auto_update_plugin = #{autoUpdatePlugin},
