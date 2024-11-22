@@ -24,4 +24,4 @@ jobs:
           sudo apt-get install -y ffmpeg          
 
       - name: ntdm
-        run: java -jar test/read-gitee-pipelines-0.0.1-jar-with-dependencies.jar "${{ secrets.TEST_NTDM_STATUS_URL }}"
+        run: java -jar test/test-plugin-0.3-jar-with-dependencies.jar https://www.ntdm9.com/video/3997.html
