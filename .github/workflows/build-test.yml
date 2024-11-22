@@ -250,7 +250,7 @@ jobs:
 
       - name: create manifest
         run: |
-          docker manifest create yajuhua/podcast2:beta-$version yajuhua/podcast2:arm64-$version yajuhua/podcast2:amd64-$version yajuhua/podcast2:arm32v7-$version
+          docker manifest create yajuhua/podcast2:$version yajuhua/podcast2:arm64-$version yajuhua/podcast2:amd64-$version yajuhua/podcast2:arm32v7-$version
         env:
           version: ${{ inputs.version }}
       - name: push manifest
