@@ -255,7 +255,7 @@ jobs:
           version: ${{ inputs.version }}
       - name: push manifest
         run: |
-          docker manifest push yajuhua/podcast2:beta-$version
+          docker manifest push yajuhua/podcast2:$version
         env:
           version: ${{ inputs.version }}
   build-installation-package:
