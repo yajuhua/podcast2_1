@@ -1,10 +1,16 @@
 name: v2 Build Latest Images
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'version'
+        required: true
+        type: string
+
 
 jobs:
   build-UI:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -47,20 +53,14 @@ jobs:
 
       - name: Build with Maven
         run: |
-          mvn -B package --file pom.xml
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV       
-
+          mvn package -Dpodcast2Version=$version
+        env:
+          version: ${{ inputs.version }}
       - name: Upload jar artifact
         uses: actions/upload-artifact@v3
         with:
           name: jar
           path: target/  # 上传 target 目录
-
 
   build-amd64:
     permissions: write-all
@@ -91,35 +91,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PWD }}
 
-      # 获取最新yt-dlp、ffmpeg和jre8
-      - name: Get yt-dlp And ffmpeg-package
-        run: |
-          wget https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jre8.0.412-linux_x64.tar.gz
-          tar -xzf zulu8.78.0.19-ca-jre8.0.412-linux_x64.tar.gz
-          mv zulu8.78.0.19-ca-jre8.0.412-linux_x64 jre8
-          curl -L -o yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux
-          cp -rf ffmpeg-package/linux/amd64/ffmpeg .
-          chmod a+x yt-dlp ffmpeg
-          ls
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV 
-
       # 构建 amd64 Docker镜像
       - name: Build the amd64 Docker image
         run: |
-          docker build . --file Dockerfile --tag yajuhua/podcast2:${{ env.RELEASE_VERSION }}-amd64 --platform linux/amd64
-          docker push yajuhua/podcast2:${{ env.RELEASE_VERSION }}-amd64
+          docker build . --file Dockerfile --tag yajuhua/podcast2:amd64-$version --platform linux/amd64
+          docker push yajuhua/podcast2:amd64-$version
+        env:
+          version: ${{ inputs.version }}
 
   build-arm64:
     permissions: write-all
@@ -143,10 +121,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # 通过 git 命令获取当前 tag 信息, 存入环境变量 APP_VERSION
-      - name: Generate App Version
-        run: echo "APP_VERSION=$(curl --silent "https://api.github.com/repos/yajuhua/podcast2/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" >> $GITHUB_ENV
-
       # 登录 docker hub
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -157,35 +131,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PWD }}
 
-      # 获取最新yt-dlp和ffmpeg
-      - name: Get yt-dlp And ffmpeg-package
-        run: |
-          wget https://cdn.azul.com/zulu/bin/zulu8.78.0.19-ca-jre8.0.412-linux_aarch64.tar.gz
-          tar -xzf zulu8.78.0.19-ca-jre8.0.412-linux_aarch64.tar.gz
-          mv zulu8.78.0.19-ca-jre8.0.412-linux_aarch64 jre8
-          curl -L -o yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_aarch64
-          cp -rf ffmpeg-package/linux/arm64/ffmpeg .
-          chmod a+x yt-dlp ffmpeg
-          ls
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV 
-
       # 构建 arm64 Docker镜像
-      - name: Build the arm32v7 Docker image
+      - name: Build the arm64 Docker image
         run: |
-          docker build . --file Dockerfile --tag yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm64 --platform linux/arm64
-          docker push yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm64
+          docker build . --file Dockerfile --tag yajuhua/podcast2:arm64-$version --platform linux/arm64
+          docker push yajuhua/podcast2:arm64-$version
+        env:
+          version: ${{ inputs.version }}
 
   build-arm32v7:
     permissions: write-all
@@ -209,10 +161,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      # 通过 git 命令获取当前 tag 信息, 存入环境变量 APP_VERSION
-      - name: Generate App Version
-        run: echo "APP_VERSION=$(curl --silent "https://api.github.com/repos/yajuhua/podcast2/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" >> $GITHUB_ENV
-
       # 登录 docker hub
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -223,55 +171,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PWD }}
 
-      # 获取最新yt-dlp和ffmpeg
-      - name: Get yt-dlp And ffmpeg-package
-        run: |
-          wget https://cdn.azul.com/zulu-embedded/bin/zulu8.76.0.17-ca-jre8.0.402-linux_aarch32hf.tar.gz
-          tar -xzf zulu8.76.0.17-ca-jre8.0.402-linux_aarch32hf.tar.gz
-          mv zulu8.76.0.17-ca-jre8.0.402-linux_aarch32hf jre8
-          curl -L -o yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux_armv7l
-          cp -rf ffmpeg-package/linux/armv7/ffmpeg .
-          chmod a+x yt-dlp ffmpeg
-          ls
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV 
-
       # 构建 arm32v7 Docker镜像
       - name: Build the arm32v7 Docker image
         run: |
-          docker build . --file Dockerfile --tag yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm32v7 --platform linux/arm/v7
-          docker push yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm32v7            
+          docker build . --file Dockerfile --tag yajuhua/podcast2:arm32v7-$version --platform linux/arm/v7
+          docker push yajuhua/podcast2:arm32v7-$version
+        env:
+          version: ${{ inputs.version }}
+
 
   push-docker-hub:
     permissions: write-all
     runs-on: ubuntu-latest
     needs: [ build-arm64,build-amd64,build-arm32v7]
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV  
-
       # 设置 QEMU, 后面 docker buildx 依赖此.
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -279,13 +192,13 @@ jobs:
       # 设置 Docker buildx, 方便构建 Multi platform 镜像
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
       - name: pull amd4 and arm64 docker images
         run: |
-          docker pull yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm64
-          docker pull yajuhua/podcast2:${{ env.RELEASE_VERSION }}-amd64
-          docker pull yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm32v7
-
+          docker pull yajuhua/podcast2:arm64-$version
+          docker pull yajuhua/podcast2:amd64-$version
+          docker pull yajuhua/podcast2:arm32v7-$version
+        env:
+          version: ${{ inputs.version }}
       # 登录 docker hub
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -298,13 +211,14 @@ jobs:
 
       - name: create manifest
         run: |
-          docker manifest create yajuhua/podcast2:latest yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm64 yajuhua/podcast2:${{ env.RELEASE_VERSION }}-amd64 yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm32v7
-          docker manifest create yajuhua/podcast2:${{ env.RELEASE_VERSION }} yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm64 yajuhua/podcast2:${{ env.RELEASE_VERSION }}-amd64 yajuhua/podcast2:${{ env.RELEASE_VERSION }}-arm32v7
+          docker manifest create yajuhua/podcast2:beta-$version yajuhua/podcast2:arm64-$version yajuhua/podcast2:amd64-$version yajuhua/podcast2:arm32v7-$version
+        env:
+          version: ${{ inputs.version }}
       - name: push manifest
         run: |
-          docker manifest push yajuhua/podcast2:${{ env.RELEASE_VERSION }}
-          docker manifest push yajuhua/podcast2:latest
-
+          docker manifest push yajuhua/podcast2:$version
+        env:
+          version: ${{ inputs.version }}
 
   build-installation-package:
     permissions: write-all
@@ -337,32 +251,44 @@ jobs:
           curl -L -o platform/osx/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos_legacy"
           chmod a+x platform/osx/yt-dlp
           cp -rf BOOT-INF/classes BOOT-INF/lib platform/osx/
-          zip -r podcast2-osx-x64.zip platform/osx/   
+          zip -r podcast2-osx-x64.zip platform/osx/ 
           md5sum podcast2-osx-x64.zip >> md5.txt
           md5sum app.jar >> md5.txt
-
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Get Maven Project Version
-        id: get_version
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV 
 
       # 上传文件并发布 Release
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ env.RELEASE_VERSION }}"
+          automatic_release_tag: "${{ inputs.version }}"
           prerelease: true
-          title: "${{ env.RELEASE_VERSION }}"
+          title: "${{ inputs.version }}"
           files: |
             podcast2-win-x64.zip
             podcast2-osx-x64.zip
             app.jar
             md5.txt
+  # 更新信息
+  update-info:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    needs: build-installation-package
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update pom.xml
+        run: |
+          sed -i "s/^\([[:space:]]*\)<podcast2Version>.*<\/podcast2Version>/\1<podcast2Version>$version<\/podcast2Version>/" pom.xml
+        env:
+          version: ${{ inputs.version }}
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "Release $version" || echo "No changes to commit"
+          git push
+        env:
+          version: ${{ inputs.version }}
