@@ -260,7 +260,6 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "${{ inputs.version }}"
-          prerelease: true
           title: "${{ inputs.version }}"
           files: |
             podcast2-win-x64.zip
