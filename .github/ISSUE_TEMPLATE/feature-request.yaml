@@ -1,0 +1,60 @@
+name: 功能请求
+description: 新功能请求
+labels: [ "feature" ]
+
+body:
+  - type: input
+    id: title
+    attributes:
+      label: 功能请求标题
+      description: 用一句话概括你的功能需求
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 请认真填写下方内容，帮助我们更好地理解你的需求
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 你必须先同意以下内容
+      options:
+        - label: 我已在 [Release](https://github.com/yajuhua/podcast2/releases) 检阅最新版本并尝试，且没有我想要的功能。
+          required: true
+        - label: 我已查看 [文档](https://yajuhua.github.io/) ,但没有我想要的功能。
+          required: true
+
+  - type: textarea
+    id: feature
+    attributes:
+      label: 功能
+      description: 描述你想要的功能
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: 使用场景
+      description: 描述你遇到的问题，或者你为什么需要这个功能（例如，它可以解决什么问题）
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 功能优先级
+      description: 该功能对你的影响程度
+      options:
+        - 非常紧急
+        - 较为重要
+        - 一般重要
+        - 可以等待
+
+  - type: textarea
+    id: additional_details
+    attributes:
+      label: 补充细节
+      description: （可选）提供任何额外信息，例如截图、参考链接，或其他有助于理解的内容
